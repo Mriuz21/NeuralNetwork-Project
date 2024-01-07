@@ -5,5 +5,8 @@ class Activation_ReLU:
     self.output = np.maximum(0,inputs)
     self.inputs = inputs
   def backward(self, dvalues):
-        self.dinputs = dvalues.copy()
-        self.dinputs[self.inputs <= 0] = 0
+    # Reshape dvalues to match self.inputs
+    dvalues = dvalues.reshape(self.inputs.shape)
+
+    self.dinputs = dvalues.copy()
+    self.dinputs[self.inputs <= 0] = 0
