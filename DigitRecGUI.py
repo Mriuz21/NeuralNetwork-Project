@@ -3,12 +3,14 @@ import tkinter.ttk as ttk
 from PIL import Image, ImageDraw
 import numpy as np
 import cv2
+
 class DigitRecGUI:
     def __init__(self, window, predict_callback,train_model_callback):
         #Create Window
         self.window = window
         self.window.title('Digit Recognition')
         self.window.attributes("-fullscreen", True)
+
 
         #Create Theme
         style = ttk.Style()
@@ -17,7 +19,7 @@ class DigitRecGUI:
         #Var
         self.color = 'black'
         self.points = []
-        self.pen_width = 5
+        self.pen_width = 10
         self.image = None
 
         #Create UI
@@ -30,6 +32,13 @@ class DigitRecGUI:
         self.train_button = tk.Button(window, text="Train Model", command=train_model_callback)
         self.train_button.pack()
 
+        #Create custom data
+        try:
+            self.trainImages = np.load('data.npz')['images']
+            self.trainLabels = np.load('data.npz')['labels']
+        except: 
+            self.trainImages = []
+            self.trainLabels = []
 
     def paint(self, event):
         x1, y1 = (event.x - self.pen_width), (event.y - self.pen_width)
@@ -71,28 +80,41 @@ class DigitRecGUI:
     def predict_wrapper(self):
         self.predict()
         self.predict_callback(self.image, self.current_label)  
-    
     def predict(self):
         image = Image.new("L", (375, 375), 'white')
         draw = ImageDraw.Draw(image)
         for point in self.points:
-            draw.ellipse([point[0]-self.pen_width, point[1]-self.pen_width, point[0]+self.pen_width, point[1]+self.pen_width], fill='black')
+            draw.ellipse([point[0] - self.pen_width, point[1] - self.pen_width, point[0] + self.pen_width, point[1] + self.pen_width], fill='black')
+            print(point," ")
 
+
+        # Resize to 28x28
         image = image.resize((28, 28))
-        image = np.array(image)
-        image = np.invert(image)
+        
+        # Convert to NumPy array
+        image = np.invert(np.array(image))
+        
+        # Thresholding and reshaping
         img = image
-        _, img = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY)
+        _, img = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
         img = img.reshape(28, 28)
-        cv2.imwrite('test.png', img)
 
-        _, image = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY)
+        # Save the image
+        cv2.imwrite('test6.png', img)
+
+        # Normalize and reshape for prediction
+        _,image = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY)
         image = image / 255.0
         image = image.reshape(-1)
+        self.trainImages.append(image)
+        self.trainLabels.append(self.current_label)
+        np.savez('data.npz',images = self.trainImages,labels = self.trainLabels)
+
 
         self.canvas.delete('all')
         self.points = []
         self.image = image
+
     
     def button_click(self, digit):
         for btn in self.digit_buttons:

@@ -69,9 +69,6 @@ class Model:
           print(f'Epoch {epoch+1}, average loss: {avg_loss}')
 
 
-
-
-
     def predict(self, X):
         # Forward pass
         for layer, activation in zip(self.layers, self.activations):
@@ -80,8 +77,8 @@ class Model:
             X = activation.output
 
               # Compute predictions
-            predictions = np.argmax(activation.output, axis=1)
-            return predictions
+        predictions = np.argmax(activation.output, axis=1)
+        return predictions
     def save_model(self, version):
         save_dir = 'Models/V' + str(version)
         os.makedirs(f'Models', exist_ok=True)
@@ -108,3 +105,19 @@ class Model:
                 # Calculate accuracy
             accuracy = np.mean(predictions == y_val)
         print(f'Validation accuracy: {accuracy * 100}%')
+    def load_TrainData(self, filename):
+        # Load the data from the npz file
+        data = np.load(filename)
+
+        # Access the images and labels
+        X_train = data['images']
+        Y_train = data['labels']
+
+        # Normalize the images
+        X_train = X_train / 255.0
+
+        # Reshape the images
+        X_train = X_train.reshape(X_train.shape[0], -1)
+
+        self.X_train, self.Y_train = X_train, Y_train
+
